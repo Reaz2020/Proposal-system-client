@@ -1,15 +1,1 @@
--React is used for the frontend, and PHP is used for the backend.
--Tailwind CSS, DaisyUI, Lucide, and Material UI were installed and configured.
--User layout and root layout are implemented.
--If a user is an admin, they can view the user list after logging in and navigate to a specific user to act on their behalf.
--When users log in for the first time, they are shown a setup page located at /customerPortal.
--Other routes are defined in the router configuration.
--Currently, it is not possible to track whether a user is logging in for the first time or if they have already completed the system setup.
--Hardware devices must eventually be fetched from the server and displayed on the user’s map page. At the moment, users can add hardware manually.
--Maps and floors are added by the user and handled within the codebase.
--Currently, the site map displays the map along with placed components retrieved from local storage.
--Local storage is updated within the same component using useEffect on every change.
--When data is retrieved from the server, it will be pushed into the site map component in the same format.
--At present, data is fetched and stored in state on the home page.
--From the home page, the data is passed to the site map as props, where it is destructured and saved to local storage.
--Some parts of the code were modified due to requirement changes during development, where alternative solutions could also have been applied.
+Proposal system 

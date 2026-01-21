@@ -1,0 +1,24 @@
+/* Tailwind-friendly custom styles for slick dots */
+.slick-dots li button:before {
+  content: '•'; /* ensure dot is visible */
+  font-size: 1.25rem; /* bigger size */
+  color: theme('colors.purple.500'); /* Tailwind purple */
+  opacity: 1;
+}
+
+.slick-dots li.slick-active button:before {
+  color: theme('colors.purple.700'); /* darker accent for active */
+}
+
+
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD');
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-variation-settings: 
+    'FILL' 0, 
+    'wght' 400, 
+    'GRAD' 0, 
+    'opsz' 24;
+}
+
