@@ -23,9 +23,10 @@ const onSubmit = async () => {
 
   if (result.success) {
     // Check the user's role
-    if (result.user?.role === "admin") {
-      navigate("/admin/users");
-    } else {
+    // if (result.user?.role === "admin") {
+    //   navigate("/customers");
+    // } else 
+   {
       navigate("/");
     }
   } else {

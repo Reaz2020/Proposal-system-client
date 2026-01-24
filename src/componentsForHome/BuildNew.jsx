@@ -1,102 +1,145 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
+import API_BASE from "../Config";
 
 export default function BuildNew() {
-  // Placeholder variables (replace later with DB data)
-  const placeholders = {
-    customerId: "1106",
-    offerNumber: "1106 / 03",
-    customerName: "Bolag AB",
-    vatNumber: "SE-01",
-    contactPerson: "Hans Hansson",
-    address: "Ågatan 25",
-    postalCode: "582 22",
-    city: "Linköping",
-    country: "SE - Sverige",
-
-    offerValid: "14 dagar",
-    startDate: "2025-01-01",  // date format
-    contractLength: "36 månader",
-    contractType: "Köp",
-    billing: "Årsvis",
-
-    packageSize: "20 mätpunkter",
-  };
-
   const [openModal, setOpenModal] = useState(false);
   const [modalType, setModalType] = useState("");
-  const [modalData, setModalData] = useState(null);
+  const [reviewData, setReviewData] = useState(null);
+  const [skipCustomerInfo, setSkipCustomerInfo] = useState(false);
 
-  const containerRef = useRef(null);
 
-  useEffect(() => {
-    // Create hidden wrapper without changing your current JSX
-    const wrapper = document.createElement("div");
-    wrapper.id = "build-new-wrapper";
-    document.body.appendChild(wrapper);
-    containerRef.current = wrapper;
-
-    return () => {
-      document.body.removeChild(wrapper);
-    };
-  }, []);
-
-  const handleOpenModal = (type) => {
-    setModalType(type);
-
-    const container = document.querySelector(".p-8.max-w-5xl");
-
+  const collectFormData = () => {
+    const container = document.querySelector(".build-new-form");
     const inputs = Array.from(container.querySelectorAll("input"));
     const selects = Array.from(container.querySelectorAll("select"));
 
-    const data = {};
+    const data = [];
 
-    inputs.forEach((el, idx) => {
-      const key = el.placeholder || `input_${idx + 1}`;
-
+    inputs.forEach((el) => {
       if (el.type === "checkbox") {
-        data[key] = el.checked ? "selected" : "not selected";
-      } else {
-        data[key] = el.value || el.placeholder;
+        data.push({
+          label: el.nextSibling?.textContent?.trim() || "Checkbox",
+          value: el.checked ? "Ja" : "Nej",
+        });
+      } else if (el.disabled) {
+        data.push({
+          label: el.value,
+          value: "—",
+        });
+      } else if (el.placeholder) {
+        data.push({
+          label: el.placeholder,
+          value: el.value || "—",
+        });
       }
     });
 
-    selects.forEach((el, idx) => {
-      const key = el.name || `select_${idx + 1}`;
-      data[key] = el.value || el.options[el.selectedIndex]?.text;
+    selects.forEach((el) => {
+      data.push({
+        label: "Val",
+        value: el.value,
+      });
     });
 
-    setModalData(data);
+    return data;
+  };
+
+  const collectFormDataForAPI = () => {
+    const container = document.querySelector(".build-new-form");
+    const inputs = Array.from(container.querySelectorAll("input"));
+    const selects = Array.from(container.querySelectorAll("select"));
+
+    const payload = {};
+
+    inputs.forEach((el) => {
+      if (el.type === "checkbox") {
+        payload[el.name] = el.checked ? 1 : 0;
+      } else if (el.name) {
+        payload[el.name] = el.value === "" ? null : el.value;  // <-- CHANGE HERE
+      }
+    });
+
+    selects.forEach((el) => {
+      if (el.name) {
+        payload[el.name] = el.value === "" ? null : el.value;  // <-- CHANGE HERE
+      }
+    });
+
+    return payload;
+  };
+
+  const saveOffer = async () => {
+    const payload = collectFormDataForAPI();
+
+    try {
+      const res = await fetch(`${API_BASE}/save_offer.php`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      console.log("Backend response:", data);
+
+      if (!res.ok) {
+        throw new Error(data.message || "Error saving offer");
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Save offer failed:", error);
+      throw error;
+    }
+  };
+
+  const handleOpenModal = (type) => {
+    setModalType(type);
+    setReviewData(collectFormData());
     setOpenModal(true);
   };
 
   const handleCloseModal = () => {
     setOpenModal(false);
     setModalType("");
+    setReviewData(null);
   };
 
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="p-8 max-w-5xl build-new-form">
       <h1 className="text-2xl font-semibold mb-6">Skapa nytt</h1>
 
       {/* Kundinformation */}
       <section className="mb-8">
-        <h2 className="font-medium mb-4">Kundinformation</h2>
+        <h2 className="font-medium mb-2">Kundinformation</h2>
 
-        <div className="grid grid-cols-2 gap-4">
-          <input placeholder={placeholders.customerId} className="input" />
-          <input placeholder={placeholders.offerNumber} className="input" />
+        <label className="flex items-center gap-2 mb-4 text-sm">
+          <input
+  type="checkbox"
+  name="skip_customer_info"
+  checked={skipCustomerInfo}
+  onChange={(e) => setSkipCustomerInfo(e.target.checked)}
+/>
 
-          <input placeholder={placeholders.customerName} className="input" />
-          <input placeholder={placeholders.vatNumber} className="input" />
+          <span>Ange ej kundinformation</span>
+        </label>
 
-          <input placeholder={placeholders.contactPerson} className="input" />
-          <input placeholder={placeholders.address} className="input" />
+{!skipCustomerInfo && (
+  <div className="grid grid-cols-2 gap-4">
+    <input name="customer_id" placeholder="Kund-ID" className="input" />
+    <input name="offer_number" placeholder="Offertnummer" className="input" />
+    <input name="customer_name" placeholder="Kundnamn" className="input" />
+    <input name="vat_number" placeholder="Organisationsnummer / VAT" className="input" />
+    <input name="contact_person" placeholder="Kontaktperson" className="input" />
+    <input name="address" placeholder="Adress" className="input" />
+    <input name="postal_code" placeholder="Postnummer" className="input" />
+    <input name="city" placeholder="Ort" className="input" />
+    <input name="country" placeholder="Land" className="input col-span-2" />
+  </div>
+)}
 
-          <input placeholder={placeholders.postalCode} className="input" />
-          <input placeholder={placeholders.city} className="input" />
-
-          <input placeholder={placeholders.country} className="input col-span-2" />
-        </div>
       </section>
 
       {/* Avtalsinformation */}
@@ -104,19 +147,23 @@ export default function BuildNew() {
         <h2 className="font-medium mb-4">Avtalsinformation</h2>
 
         <div className="grid grid-cols-2 gap-4">
-          <input placeholder={placeholders.offerValid} className="input" />
-          <input placeholder={placeholders.startDate} className="input" />
+          <input name="offer_valid_days" placeholder="Offert giltig (dagar)" className="input" />
+          <input name="start_date" type="date" className="input" />
 
-          <select className="input">
-            <option>{placeholders.contractLength}</option>
+          <select name="contract_length_months" className="input">
+            <option value="36">36 månader</option>
+            <option value="24">24 månader</option>
+            <option value="12">12 månader</option>
           </select>
 
-          <select className="input">
-            <option>{placeholders.contractType}</option>
+          <select name="contract_type" className="input">
+            <option value="Köp">Köp</option>
+            <option value="Hyra">Hyra</option>
           </select>
 
-          <select className="input">
-            <option>{placeholders.billing}</option>
+          <select name="billing_period" className="input">
+            <option value="Årsvis">Årsvis</option>
+            <option value="Månadsvis">Månadsvis</option>
           </select>
         </div>
       </section>
@@ -125,47 +172,74 @@ export default function BuildNew() {
       <section className="mb-8">
         <h2 className="font-medium mb-4">Paketinformation</h2>
 
-        <div className="grid grid-cols-3 gap-4 mb-4">
-          <input placeholder={placeholders.packageSize} className="input col-span-2" />
-          <input placeholder="Pris" className="input" />
+        <div className="grid grid-cols-4 gap-4 mb-2 text-sm font-medium">
+          <span>Produkt</span>
+          <span>Antal</span>
+          <span>Pris</span>
+          <span>Rabatt</span>
         </div>
 
-        <div className="space-y-3">
-          {[
-            "60/200/600A CTs",
-            "ELW Gateways",
-            "HAN-port",
-            "Temp & Humid.",
-            "Air Quality sensor",
-          ].map((label) => (
-            <div key={label} className="grid grid-cols-3 gap-4">
-              <input placeholder={label} className="input" />
-              <input placeholder="Antal" className="input" />
-              <input placeholder="Pris" className="input" />
-            </div>
-          ))}
-        </div>
+        {[
+          { label: "60/200/600A CTs", quantity: "cts_quantity", price: "cts_price", discount: "cts_discount" },
+          { label: "ELW Gateways", quantity: "gateways_quantity", price: "gateways_price", discount: "gateways_discount" },
+          { label: "HAN-port", quantity: "han_port_quantity", price: "han_port_price", discount: "han_port_discount" },
+          { label: "Temp & Humid.", quantity: "temp_humid_quantity", price: "temp_humid_price", discount: "temp_humid_discount" },
+          { label: "Air Quality sensor", quantity: "air_quality_quantity", price: "air_quality_price", discount: "air_quality_discount" },
+        ].map((item) => (
+          <div key={item.label} className="grid grid-cols-4 gap-4 mb-2">
+            <input value={item.label} disabled className="input bg-gray-100" />
+            <input name={item.quantity} placeholder="0" className="input" />
+            <input name={item.price} placeholder="kr" className="input" />
+            <input name={item.discount} placeholder="%" className="input" />
+          </div>
+        ))}
       </section>
 
       {/* Tjänster */}
       <section className="mb-8">
         <h2 className="font-medium mb-4">Tjänster</h2>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
           {[
-            "Konfiguration",
-            "Frakt",
-            "Energinsikter",
-            "Produktionspaket",
-            "API",
-            "Högupplöst data",
-            "Kundanpassning",
+            { name: "Baspaket", checkboxName: "baspaket_enabled", disabled: true, oneTime: "baspaket_one_time", monthly: "baspaket_monthly", discount: "baspaket_discount" },
+            { name: "Konfiguration", checkboxName: "configuration_enabled", oneTime: "configuration_one_time", monthly: "configuration_monthly", discount: "configuration_discount" },
+            { name: "Frakt", checkboxName: "shipping_enabled", oneTime: "shipping_one_time", monthly: "shipping_monthly", discount: "shipping_discount" },
+            { name: "Energinsikter", checkboxName: "energy_insights_enabled", oneTime: "energy_insights_one_time", monthly: "energy_insights_monthly", discount: "energy_insights_discount" },
+            { name: "Produktionspaket", checkboxName: "production_package_enabled", oneTime: "production_package_one_time", monthly: "production_package_monthly", discount: "production_package_discount" },
+            { name: "API", checkboxName: "api_enabled", oneTime: "api_one_time", monthly: "api_monthly", discount: "api_discount" },
+            { name: "Högupplöst data", checkboxName: "high_res_data_enabled", oneTime: "high_res_data_one_time", monthly: "high_res_data_monthly", discount: "high_res_data_discount" },
+            { name: "Kundanpassning", checkboxName: "custom_solution_enabled", oneTime: "custom_solution_one_time", monthly: "custom_solution_monthly", discount: "custom_solution_discount" },
           ].map((service) => (
-            <label key={service} className="flex items-center gap-2">
-              <input type="checkbox" />
-              <span>{service}</span>
-            </label>
+            <div
+              key={service.name}
+              className="grid grid-cols-4 gap-4 items-center"
+            >
+              <label className="flex items-center gap-2">
+                <input type="checkbox" name={service.checkboxName} disabled={service.disabled} />
+                <span>{service.name}</span>
+              </label>
+              <input name={service.oneTime} placeholder="Engångspris" className="input" />
+              <input name={service.monthly} placeholder="kr/mån" className="input" />
+              <input name={service.discount} placeholder="%" className="input" />
+            </div>
           ))}
+        </div>
+      </section>
+
+      {/* Extra */}
+      <section className="mb-8">
+        <h2 className="font-medium mb-4">Extra</h2>
+
+        <div className="grid grid-cols-4 gap-4">
+          <input name="user_accounts_quantity" placeholder="Användarkonton" className="input" />
+          <input name="user_accounts_monthly" placeholder="Antal" className="input" />
+          <input name="user_accounts_discount" placeholder="kr/mån" className="input" />
+          <input name="custom_dashboard_quantity" placeholder="%" className="input" />
+
+          <input name="custom_dashboard_monthly" placeholder="Kundanp. Dashboard" className="input" />
+          <input name="custom_dashboard_discount" placeholder="Antal" className="input" />
+          <input name="status" placeholder="kr/mån" className="input" />
+          <input placeholder="%" className="input" />
         </div>
       </section>
 
@@ -186,21 +260,24 @@ export default function BuildNew() {
         </button>
       </div>
 
+      {/* Review Modal */}
       {openModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+          <div className="bg-white rounded-xl p-6 w-full max-w-lg">
             <h2 className="text-xl font-semibold mb-4">
-              {modalType === "offer" ? "Bekräfta Offert" : "Bekräfta Avtal"}
+              Granska innan du sparar
             </h2>
 
-            <div className="text-sm bg-gray-100 p-4 rounded-lg max-h-64 overflow-y-auto">
-              {modalData &&
-                Object.entries(modalData).map(([k, v]) => (
-                  <div key={k} className="flex justify-between border-b py-1">
-                    <span className="font-medium">{k}</span>
-                    <span>{String(v)}</span>
-                  </div>
-                ))}
+            <div className="max-h-80 overflow-y-auto text-sm border rounded-lg">
+              {reviewData?.map((row, i) => (
+                <div
+                  key={i}
+                  className="flex justify-between px-4 py-2 border-b"
+                >
+                  <span className="font-medium">{row.label}</span>
+                  <span>{row.value}</span>
+                </div>
+              ))}
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
@@ -212,23 +289,27 @@ export default function BuildNew() {
               </button>
 
               <button
-                onClick={() => {
-                  handleCloseModal();
-                  alert(
-                    modalType === "offer"
-                      ? "Offert skapad!"
-                      : "Avtal skapat!"
-                  );
+                onClick={async () => {
+                  try {
+                    const response = await saveOffer();
+                    handleCloseModal();
+                    alert(
+                      modalType === "offer"
+                        ? "Offert sparad!"
+                        : "Avtal sparat!"
+                    );
+                  } catch (error) {
+                    alert("Kunde inte spara offerten. Försök igen.");
+                  }
                 }}
                 className="px-5 py-2 rounded-lg bg-emerald-600 text-white"
               >
-                Bekräfta
+                Bekräfta & spara
               </button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }
