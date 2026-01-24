@@ -64,6 +64,8 @@ export default function BuildNew() {
         payload[el.name] = el.value === "" ? null : el.value;  // <-- CHANGE HERE
       }
     });
+     // 🔽 NEW LINE ADDED — new field, default 0 (backend-safe)
+    payload.measurement_points = payload.measurement_points ?? 0;
 
     return payload;
   };
@@ -143,30 +145,73 @@ export default function BuildNew() {
       </section>
 
       {/* Avtalsinformation */}
-      <section className="mb-8">
-        <h2 className="font-medium mb-4">Avtalsinformation</h2>
+{/* Avtalsinformation */}
+{/* Avtalsinformation */}
+<section className="mb-8">
+  <h2 className="font-medium mb-4">Avtalsinformation</h2>
 
-        <div className="grid grid-cols-2 gap-4">
-          <input name="offer_valid_days" placeholder="Offert giltig (dagar)" className="input" />
-          <input name="start_date" type="date" className="input" />
+  <div className="space-y-4">
 
-          <select name="contract_length_months" className="input">
-            <option value="36">36 månader</option>
-            <option value="24">24 månader</option>
-            <option value="12">12 månader</option>
-          </select>
+<div className="flex items-center gap-4">
+  <label className="w-56 text-sm">offer_valid_days</label>
+  <select
+    name="offer_valid_days"
+    className="input w-1/2"
+  >
+    <option value="14">14</option>
+    <option value="30">30</option>
+  </select>
+</div>
 
-          <select name="contract_type" className="input">
-            <option value="Köp">Köp</option>
-            <option value="Hyra">Hyra</option>
-          </select>
 
-          <select name="billing_period" className="input">
-            <option value="Årsvis">Årsvis</option>
-            <option value="Månadsvis">Månadsvis</option>
-          </select>
-        </div>
-      </section>
+    <div className="flex items-center gap-4">
+      <label className="w-56 text-sm">start_date</label>
+      <input
+        name="start_date"
+        type="date"
+        className="input w-1/2"
+      />
+    </div>
+
+    <div className="flex items-center gap-4">
+      <label className="w-56 text-sm">contract_length_months</label>
+      <select
+        name="contract_length_months"
+        className="input w-1/2"
+      >
+        <option value="36">36 månader</option>
+        <option value="24">24 månader</option>
+        <option value="12">12 månader</option>
+      </select>
+    </div>
+
+    <div className="flex items-center gap-4">
+      <label className="w-56 text-sm">contract_type</label>
+      <select
+        name="contract_type"
+        className="input w-1/2"
+      >
+        <option value="Köp">Köp</option>
+        <option value="Hyra">Hyra</option>
+      </select>
+    </div>
+
+    <div className="flex items-center gap-4">
+      <label className="w-56 text-sm">billing_period</label>
+      <select
+        name="billing_period"
+        className="input w-1/2"
+      >
+        <option value="Årsvis">Årsvis</option>
+        <option value="Månadsvis">Månadsvis</option>
+      </select>
+    </div>
+
+  </div>
+</section>
+
+
+
 
       {/* Paketinformation */}
       <section className="mb-8">
@@ -178,6 +223,26 @@ export default function BuildNew() {
           <span>Pris</span>
           <span>Rabatt</span>
         </div>
+        {/* 🔽 NEW FIELD: storlek (mätpunkter) */}
+<div className="grid grid-cols-4 gap-4 mb-2">
+  <label className="text-sm font-medium">storlek</label>
+
+  <div className="relative">
+    <input
+      name="storlek"
+      type="number"
+      defaultValue={0}
+      className="input pr-24"
+    />
+    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 ">
+      - mätpunkter
+    </span>
+  </div>
+
+  <span className="text-sm font-medium">—</span>
+  <span className="text-sm font-medium">—</span>
+</div>
+
 
         {[
           { label: "60/200/600A CTs", quantity: "cts_quantity", price: "cts_price", discount: "cts_discount" },

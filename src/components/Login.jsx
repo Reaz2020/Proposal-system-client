@@ -27,7 +27,7 @@ const onSubmit = async () => {
     //   navigate("/customers");
     // } else 
    {
-      navigate("/");
+      navigate("/home/create");
     }
   } else {
     setError(result.message || "Login failed");
