@@ -109,6 +109,24 @@ export default function BuildNew() {
     setReviewData(null);
   };
 
+
+  const applyDiscount = (priceName, discountValue) => {
+  const priceInput = document.querySelector(`input[name="${priceName}"]`);
+  if (!priceInput) return;
+
+  const original = parseFloat(priceInput.dataset.original ?? priceInput.value);
+  if (isNaN(original)) return;
+
+  priceInput.dataset.original = original;
+
+  const discount = parseFloat(discountValue);
+  if (isNaN(discount)) return;
+
+  const discountedPrice = original - (original * discount) / 100;
+  priceInput.value = Math.max(0, discountedPrice.toFixed(2));
+};
+
+
   return (
     <div className="p-8 max-w-5xl build-new-form">
       <h1 className="text-2xl font-semibold mb-6">Skapa nytt</h1>
@@ -255,7 +273,9 @@ export default function BuildNew() {
             <input value={item.label} disabled className="input bg-gray-100" />
             <input name={item.quantity} placeholder="0" className="input" />
             <input name={item.price} placeholder="kr" className="input" />
-            <input name={item.discount} placeholder="%" className="input" />
+            <input name={item.discount} placeholder="%" className="input"  onChange={(e) =>
+    applyDiscount(item.price, e.target.value)
+  } />
           </div>
         ))}
       </section>
@@ -285,28 +305,86 @@ export default function BuildNew() {
               </label>
               <input name={service.oneTime} placeholder="Engångspris" className="input" />
               <input name={service.monthly} placeholder="kr/mån" className="input" />
-              <input name={service.discount} placeholder="%" className="input" />
+              <input name={service.discount} placeholder="%" className="input"  onChange={(e) =>
+    applyDiscount(service.monthly, e.target.value)
+  }/>
             </div>
           ))}
         </div>
       </section>
 
       {/* Extra */}
-      <section className="mb-8">
-        <h2 className="font-medium mb-4">Extra</h2>
+<section className="mb-8">
+  <h2 className="font-medium mb-4">Extra</h2>
 
-        <div className="grid grid-cols-4 gap-4">
-          <input name="user_accounts_quantity" placeholder="Användarkonton" className="input" />
-          <input name="user_accounts_monthly" placeholder="Antal" className="input" />
-          <input name="user_accounts_discount" placeholder="kr/mån" className="input" />
-          <input name="custom_dashboard_quantity" placeholder="%" className="input" />
+  <div className="grid grid-cols-4 gap-4 text-sm font-medium mb-2">
+    <span>Tjänst</span>
+    <span>Antal</span>
+    <span>kr/mån</span>
+    <span>Rabatt %</span>
+  </div>
 
-          <input name="custom_dashboard_monthly" placeholder="Kundanp. Dashboard" className="input" />
-          <input name="custom_dashboard_discount" placeholder="Antal" className="input" />
-          <input name="status" placeholder="kr/mån" className="input" />
-          <input placeholder="%" className="input" />
-        </div>
-      </section>
+  {/* User accounts */}
+  <div className="grid grid-cols-4 gap-4 mb-2">
+    <input
+      value="Användarkonton"
+      disabled
+      className="input bg-gray-100"
+    />
+
+    <input
+      name="user_accounts_quantity"
+      placeholder="Antal"
+      className="input"
+    />
+
+    <input
+      name="user_accounts_monthly"
+      placeholder="kr/mån"
+      className="input"
+    />
+
+    <input
+      name="user_accounts_discount"
+      placeholder="%"
+      className="input"
+      onChange={(e) =>
+        applyDiscount("user_accounts_monthly", e.target.value)
+      }
+    />
+  </div>
+
+  {/* Custom dashboard */}
+  <div className="grid grid-cols-4 gap-4">
+    <input
+      value="Kundanp. Dashboard"
+      disabled
+      className="input bg-gray-100"
+    />
+
+    <input
+      name="custom_dashboard_quantity"
+      placeholder="Antal"
+      className="input"
+    />
+
+    <input
+      name="custom_dashboard_monthly"
+      placeholder="kr/mån"
+      className="input"
+    />
+
+    <input
+      name="custom_dashboard_discount"
+      placeholder="%"
+      className="input"
+      onChange={(e) =>
+        applyDiscount("custom_dashboard_monthly", e.target.value)
+      }
+    />
+  </div>
+</section>
+
 
       {/* Actions */}
       <div className="flex gap-4">
