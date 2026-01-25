@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { useState  , useEffect , useContext } from "react";
 import API_BASE from "../Config";
+import { AuthContext } from "../components/AuthContext";
 
 export default function BuildNew() {
+  const { user } = useContext(AuthContext);
   const [openModal, setOpenModal] = useState(false);
   const [modalType, setModalType] = useState("");
   const [reviewData, setReviewData] = useState(null);
   const [skipCustomerInfo, setSkipCustomerInfo] = useState(false);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [users, setUsers] = useState([]);
 
 
   const collectFormData = () => {
@@ -126,9 +130,27 @@ export default function BuildNew() {
   priceInput.value = Math.max(0, discountedPrice.toFixed(2));
 };
 
+  useEffect(() => {
+    setUsersLoading(true);
+
+    fetch(`${API_BASE}/get_users.php`, {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.users)) {
+          setUsers(data.users);
+        }
+      })
+      .catch((err) => console.error("Error fetching users:", err))
+      .finally(() => setUsersLoading(false));
+  }, []);
+   if (usersLoading) return <p className="text-center mt-6">Loading users...</p>;
 
   return (
     <div className="p-8 max-w-5xl build-new-form">
+        <p>USER :{user?.id}</p>
       <h1 className="text-2xl font-semibold mb-6">Skapa nytt</h1>
 
       {/* Kundinformation */}

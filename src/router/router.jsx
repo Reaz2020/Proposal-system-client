@@ -7,7 +7,9 @@ import UserList from "../components/userList.jsx";
 
 import BuildNew from "../componentsForHome/BuildNew.jsx";
 import Offers from "../componentsForHome/Offers.jsx";
-import Customer from "../componentsForHome/Customer.jsx";
+import Customer from "../componentsForHome/AddCustomer.jsx";
+import CustomersOverview from "../componentsForHome/CustomersOverview.jsx";
+import AddCustomer from "../componentsForHome/AddCustomer.jsx";
 
 export const router = createBrowserRouter([
   {
@@ -32,7 +34,8 @@ export const router = createBrowserRouter([
       
           { path: "create", Component: BuildNew },
           { path: "quotes", Component: Offers },
-          { path: "customers", Component: Customer }
+          { path: "customers", Component: CustomersOverview },
+          { path: "add-customer", Component: AddCustomer},
 
         ],
       },
