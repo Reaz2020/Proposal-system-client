@@ -153,6 +153,24 @@ const updateRowTotal = (quantityName, priceName, totalName) => {
 
   totalInput.value = (qty * price).toFixed(2);
 };
+const handleQuantityPriceLink = (quantityName, priceName, totalName) => {
+  const qtyInput = document.querySelector(`input[name="${quantityName}"]`);
+  const priceInput = document.querySelector(`input[name="${priceName}"]`);
+
+  if (!qtyInput || !priceInput) return;
+
+  const qty = parseFloat(qtyInput.value);
+  if (isNaN(qty)) return;
+
+  // 🔒 Only auto-update price if user has NOT manually changed it
+  if (!priceInput.dataset.manual) {
+    priceInput.value = qty;
+  }
+
+  updateRowTotal(quantityName, priceName, totalName);
+};
+
+
 
 
   useEffect(() => {
@@ -353,23 +371,27 @@ const updateRowTotal = (quantityName, priceName, totalName) => {
   <div key={item.label} className="grid grid-cols-5 gap-4 mb-2">
     <input value={item.label} disabled className="input bg-gray-100" />
 
-    <input
-      name={item.quantity}
-      placeholder="0"
-      className="input"
-      onChange={() =>
-        updateRowTotal(item.quantity, item.price, item.total)
-      }
-    />
+ <input
+  name={item.quantity}
+  type="number"
+  defaultValue={1}
+  className="input"
+  onChange={() =>
+    handleQuantityPriceLink(item.quantity, item.price, item.total)
+  }
+/>
 
-    <input
-      name={item.price}
-      placeholder="kr"
-      className="input"
-      onChange={() =>
-        updateRowTotal(item.quantity, item.price, item.total)
-      }
-    />
+   <input
+  name={item.price}
+  type="number"
+  defaultValue={1}
+  className="input"
+  onChange={(e) => {
+    e.target.dataset.manual = "true"; // ✅ STEP 3 IS HERE
+    updateRowTotal(item.quantity, item.price, item.total);
+  }}
+/>
+
 
     <input
       name={item.discount}
