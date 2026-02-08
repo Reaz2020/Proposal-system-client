@@ -117,21 +117,24 @@ export default function BuildNew() {
   };
 
 
-  const applyDiscount = (priceName, discountValue) => {
+const applyDiscount = (priceName, discountValue) => {
   const priceInput = document.querySelector(`input[name="${priceName}"]`);
   if (!priceInput) return;
 
-  const original = parseFloat(priceInput.dataset.original ?? priceInput.value);
-  if (isNaN(original)) return;
-
-  priceInput.dataset.original = original;
-
+  // Always use the current dataset.base (updated when user changes price)
+  const base = parseFloat(priceInput.dataset.base) || 0;
   const discount = parseFloat(discountValue);
-  if (isNaN(discount)) return;
 
-  const discountedPrice = original - (original * discount) / 100;
-  priceInput.value = Math.max(0, discountedPrice.toFixed(2));
+  if (isNaN(discount)) {
+    priceInput.value = base;
+    return;
+  }
+
+  const discounted = base - (base * discount) / 100;
+  priceInput.value = Math.max(0, discounted.toFixed(2));
 };
+
+
 
 
 // 🔽 NEW FUNCTION: Calculate total for a row based on quantity and price
@@ -162,13 +165,31 @@ const handleQuantityPriceLink = (quantityName, priceName, totalName) => {
   const qty = parseFloat(qtyInput.value);
   if (isNaN(qty)) return;
 
-  // 🔒 Only auto-update price if user has NOT manually changed it
+  // Only reset price if NOT manually edited
   if (!priceInput.dataset.manual) {
     priceInput.value = qty;
+    priceInput.dataset.base = qty; // base price for discount
   }
 
   updateRowTotal(quantityName, priceName, totalName);
 };
+
+
+
+
+useEffect(() => {
+  if (usersLoading) return;
+
+  [
+    ["cts_quantity", "cts_price", "cts_total"],
+    ["gateways_quantity", "gateways_price", "gateways_total"],
+    ["han_port_quantity", "han_port_price", "han_port_total"],
+    ["temp_humid_quantity", "temp_humid_price", "temp_humid_total"],
+    ["air_quality_quantity", "air_quality_price", "air_quality_total"],
+  ].forEach(([q, p, t]) => updateRowTotal(q, p, t));
+}, [usersLoading]);
+
+
 
 
 
@@ -381,27 +402,36 @@ const handleQuantityPriceLink = (quantityName, priceName, totalName) => {
   }
 />
 
-   <input
+<input
   name={item.price}
   type="number"
   defaultValue={1}
   className="input"
   onChange={(e) => {
-    e.target.dataset.manual = "true"; // ✅ STEP 3 IS HERE
+    // User manually updated price
+    e.target.dataset.manual = "true";
+
+    // Update base price for discount calculations
+    e.target.dataset.base = e.target.value;
+
+    // Recalculate total
     updateRowTotal(item.quantity, item.price, item.total);
   }}
 />
 
 
-    <input
-      name={item.discount}
-      placeholder="%"
-      className="input"
-      onChange={(e) => {
-        applyDiscount(item.price, e.target.value);
-        updateRowTotal(item.quantity, item.price, item.total);
-      }}
-    />
+
+
+<input
+  name={item.discount}
+  placeholder="%"
+  className="input"
+  onChange={(e) => {
+    applyDiscount(item.price, e.target.value);
+    updateRowTotal(item.quantity, item.price, item.total);
+  }}
+/>
+
 
     <input
       name={item.total}
