@@ -12,6 +12,9 @@ export default function BuildNew() {
   const [users, setUsers] = useState([]);
 
 
+  
+
+
   const collectFormData = () => {
     const container = document.querySelector(".build-new-form");
     const inputs = Array.from(container.querySelectorAll("input"));
@@ -129,6 +132,28 @@ export default function BuildNew() {
   const discountedPrice = original - (original * discount) / 100;
   priceInput.value = Math.max(0, discountedPrice.toFixed(2));
 };
+
+
+// 🔽 NEW FUNCTION: Calculate total for a row based on quantity and price
+const updateRowTotal = (quantityName, priceName, totalName) => {
+  const qty = parseFloat(
+    document.querySelector(`input[name="${quantityName}"]`)?.value
+  );
+  const price = parseFloat(
+    document.querySelector(`input[name="${priceName}"]`)?.value
+  );
+  const totalInput = document.querySelector(
+    `input[name="${totalName}"]`
+  );
+
+  if (!totalInput || isNaN(qty) || isNaN(price)) {
+    if (totalInput) totalInput.value = "";
+    return;
+  }
+
+  totalInput.value = (qty * price).toFixed(2);
+};
+
 
   useEffect(() => {
     setUsersLoading(true);
@@ -262,9 +287,11 @@ export default function BuildNew() {
           <span>Antal</span>
           <span>Pris</span>
           <span>Rabatt</span>
+          <span>Total</span> {/* NEW */}
+         
         </div>
         {/* 🔽 NEW FIELD: storlek (mätpunkter) */}
-<div className="grid grid-cols-4 gap-4 mb-2">
+<div className="grid grid-cols-5 gap-4 mb-2">
   <label className="text-sm font-medium">storlek</label>
 
   <div className="relative">
@@ -274,32 +301,97 @@ export default function BuildNew() {
       defaultValue={0}
       className="input pr-24"
     />
-    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 ">
+    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
       - mätpunkter
     </span>
   </div>
 
   <span className="text-sm font-medium">—</span>
   <span className="text-sm font-medium">—</span>
+  <span className="text-sm font-medium">—</span> {/* NEW */}
 </div>
 
 
-        {[
-          { label: "60/200/600A CTs", quantity: "cts_quantity", price: "cts_price", discount: "cts_discount" },
-          { label: "ELW Gateways", quantity: "gateways_quantity", price: "gateways_price", discount: "gateways_discount" },
-          { label: "HAN-port", quantity: "han_port_quantity", price: "han_port_price", discount: "han_port_discount" },
-          { label: "Temp & Humid.", quantity: "temp_humid_quantity", price: "temp_humid_price", discount: "temp_humid_discount" },
-          { label: "Air Quality sensor", quantity: "air_quality_quantity", price: "air_quality_price", discount: "air_quality_discount" },
-        ].map((item) => (
-          <div key={item.label} className="grid grid-cols-4 gap-4 mb-2">
-            <input value={item.label} disabled className="input bg-gray-100" />
-            <input name={item.quantity} placeholder="0" className="input" />
-            <input name={item.price} placeholder="kr" className="input" />
-            <input name={item.discount} placeholder="%" className="input"  onChange={(e) =>
-    applyDiscount(item.price, e.target.value)
-  } />
-          </div>
-        ))}
+
+  {[
+  {
+    label: "60/200/600A CTs",
+    quantity: "cts_quantity",
+    price: "cts_price",
+    discount: "cts_discount",
+    total: "cts_total",
+  },
+  {
+    label: "ELW Gateways",
+    quantity: "gateways_quantity",
+    price: "gateways_price",
+    discount: "gateways_discount",
+    total: "gateways_total",
+  },
+  {
+    label: "HAN-port",
+    quantity: "han_port_quantity",
+    price: "han_port_price",
+    discount: "han_port_discount",
+    total: "han_port_total",
+  },
+  {
+    label: "Temp & Humid.",
+    quantity: "temp_humid_quantity",
+    price: "temp_humid_price",
+    discount: "temp_humid_discount",
+    total: "temp_humid_total",
+  },
+  {
+    label: "Air Quality sensor",
+    quantity: "air_quality_quantity",
+    price: "air_quality_price",
+    discount: "air_quality_discount",
+    total: "air_quality_total",
+  },
+].map((item) => (
+  <div key={item.label} className="grid grid-cols-5 gap-4 mb-2">
+    <input value={item.label} disabled className="input bg-gray-100" />
+
+    <input
+      name={item.quantity}
+      placeholder="0"
+      className="input"
+      onChange={() =>
+        updateRowTotal(item.quantity, item.price, item.total)
+      }
+    />
+
+    <input
+      name={item.price}
+      placeholder="kr"
+      className="input"
+      onChange={() =>
+        updateRowTotal(item.quantity, item.price, item.total)
+      }
+    />
+
+    <input
+      name={item.discount}
+      placeholder="%"
+      className="input"
+      onChange={(e) => {
+        applyDiscount(item.price, e.target.value);
+        updateRowTotal(item.quantity, item.price, item.total);
+      }}
+    />
+
+    <input
+      name={item.total}
+      placeholder="kr"
+      className="input bg-gray-100"
+      readOnly
+    />
+  </div>
+))}
+
+
+
       </section>
 
       {/* Tjänster */}
