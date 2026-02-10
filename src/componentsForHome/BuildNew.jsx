@@ -11,6 +11,89 @@ export default function BuildNew() {
   const [usersLoading, setUsersLoading] = useState(false);
   const [users, setUsers] = useState([]);
 
+  const products = [
+  {
+    label: "60/200/600A CTs",
+    quantity: "cts_quantity",
+    price: "cts_price",
+    discount: "cts_discount",
+    total: "cts_total",
+    defaultPrice: 10,
+  },
+  {
+    label: "ELW Gateways",
+    quantity: "gateways_quantity",
+    price: "gateways_price",
+    discount: "gateways_discount",
+    total: "gateways_total",
+    defaultPrice: 250,
+  },
+  {
+    label: "HAN-port",
+    quantity: "han_port_quantity",
+    price: "han_port_price",
+    discount: "han_port_discount",
+    total: "han_port_total",
+    defaultPrice: 50,
+  },
+  {
+    label: "Temp & Humid.",
+    quantity: "temp_humid_quantity",
+    price: "temp_humid_price",
+    discount: "temp_humid_discount",
+    total: "temp_humid_total",
+    defaultPrice: 120,
+  },
+  {
+    label: "Air Quality sensor",
+    quantity: "air_quality_quantity",
+    price: "air_quality_price",
+    discount: "air_quality_discount",
+    total: "air_quality_total",
+    defaultPrice: 180,
+  },
+];
+
+const services = [
+  {
+    label: "Baspaket",
+    enabled: "baspaket_enabled",
+    quantity: "baspaket_quantity",
+    price: "baspaket_price",
+    discount: "baspaket_discount",
+    total: "baspaket_total",
+    defaultPrice: 0,
+    disabled: true,
+  },
+  {
+    label: "Konfiguration",
+    enabled: "configuration_enabled",
+    quantity: "configuration_quantity",
+    price: "configuration_price",
+    discount: "configuration_discount",
+    total: "configuration_total",
+    defaultPrice: 1500,
+  },
+  {
+    label: "Frakt",
+    enabled: "shipping_enabled",
+    quantity: "shipping_quantity",
+    price: "shipping_price",
+    discount: "shipping_discount",
+    total: "shipping_total",
+    defaultPrice: 500,
+  },
+  {
+    label: "Energinsikter",
+    enabled: "energy_insights_enabled",
+    quantity: "energy_insights_quantity",
+    price: "energy_insights_price",
+    discount: "energy_insights_discount",
+    total: "energy_insights_total",
+    defaultPrice: 99,
+  },
+];
+
 
   
 
@@ -350,88 +433,42 @@ useEffect(() => {
   <span className="text-sm font-medium">—</span> {/* NEW */}
 </div>
 
-
-
-  {[
-  {
-    label: "60/200/600A CTs",
-    quantity: "cts_quantity",
-    price: "cts_price",
-    discount: "cts_discount",
-    total: "cts_total",
-  },
-  {
-    label: "ELW Gateways",
-    quantity: "gateways_quantity",
-    price: "gateways_price",
-    discount: "gateways_discount",
-    total: "gateways_total",
-  },
-  {
-    label: "HAN-port",
-    quantity: "han_port_quantity",
-    price: "han_port_price",
-    discount: "han_port_discount",
-    total: "han_port_total",
-  },
-  {
-    label: "Temp & Humid.",
-    quantity: "temp_humid_quantity",
-    price: "temp_humid_price",
-    discount: "temp_humid_discount",
-    total: "temp_humid_total",
-  },
-  {
-    label: "Air Quality sensor",
-    quantity: "air_quality_quantity",
-    price: "air_quality_price",
-    discount: "air_quality_discount",
-    total: "air_quality_total",
-  },
-].map((item) => (
+{products.map((item) => (
   <div key={item.label} className="grid grid-cols-5 gap-4 mb-2">
     <input value={item.label} disabled className="input bg-gray-100" />
 
- <input
-  name={item.quantity}
-  type="number"
-  defaultValue={1}
-  className="input"
-  onChange={() =>
-    handleQuantityPriceLink(item.quantity, item.price, item.total)
-  }
-/>
+    <input
+      name={item.quantity}
+      type="number"
+      defaultValue={1}
+      className="input"
+      onChange={() =>
+        handleQuantityPriceLink(item.quantity, item.price, item.total)
+      }
+    />
 
-<input
-  name={item.price}
-  type="number"
-  defaultValue={1}
-  className="input"
-  onChange={(e) => {
-    // User manually updated price
-    e.target.dataset.manual = "true";
+    <input
+      name={item.price}
+      type="number"
+      defaultValue={item.defaultPrice}
+      className="input"
+      data-base={item.defaultPrice}
+      onChange={(e) => {
+        e.target.dataset.manual = "true";
+        e.target.dataset.base = e.target.value;
+        updateRowTotal(item.quantity, item.price, item.total);
+      }}
+    />
 
-    // Update base price for discount calculations
-    e.target.dataset.base = e.target.value;
-
-    // Recalculate total
-    updateRowTotal(item.quantity, item.price, item.total);
-  }}
-/>
-
-
-
-
-<input
-  name={item.discount}
-  placeholder="%"
-  className="input"
-  onChange={(e) => {
-    applyDiscount(item.price, e.target.value);
-    updateRowTotal(item.quantity, item.price, item.total);
-  }}
-/>
-
+    <input
+      name={item.discount}
+      placeholder="%"
+      className="input"
+      onChange={(e) => {
+        applyDiscount(item.price, e.target.value);
+        updateRowTotal(item.quantity, item.price, item.total);
+      }}
+    />
 
     <input
       name={item.total}
@@ -444,7 +481,10 @@ useEffect(() => {
 
 
 
-      </section>
+
+
+
+  </section>
 
       {/* Tjänster */}
       <section className="mb-8">
