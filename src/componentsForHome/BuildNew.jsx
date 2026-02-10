@@ -94,6 +94,24 @@ const services = [
   },
 ];
 
+const extraServices = [
+  {
+    name: "Extra support",
+    quantity: "extra_support_quantity",
+    price: "extra_support_price",
+    discount: "extra_support_discount",
+    total: "extra_support_total",
+  },
+  {
+    name: "Extra lagring",
+    quantity: "extra_storage_quantity",
+    price: "extra_storage_price",
+    discount: "extra_storage_discount",
+    total: "extra_storage_total",
+  },
+];
+
+
 
   
 
@@ -239,20 +257,13 @@ const updateRowTotal = (quantityName, priceName, totalName) => {
 
   totalInput.value = (qty * price).toFixed(2);
 };
-const handleQuantityPriceLink = (quantityName, priceName, totalName) => {
-  const qtyInput = document.querySelector(`input[name="${quantityName}"]`);
-  const priceInput = document.querySelector(`input[name="${priceName}"]`);
+const handleQuantityChange = (quantityName, priceName, totalName) => {
+  updateRowTotal(quantityName, priceName, totalName);
+};
 
-  if (!qtyInput || !priceInput) return;
-
-  const qty = parseFloat(qtyInput.value);
-  if (isNaN(qty)) return;
-
-  // Only reset price if NOT manually edited
-  if (!priceInput.dataset.manual) {
-    priceInput.value = qty;
-    priceInput.dataset.base = qty; // base price for discount
-  }
+const handlePriceChange = (e, quantityName, priceName, totalName) => {
+  e.target.dataset.manual = "true";
+  e.target.dataset.base = e.target.value;
 
   updateRowTotal(quantityName, priceName, totalName);
 };
@@ -260,17 +271,16 @@ const handleQuantityPriceLink = (quantityName, priceName, totalName) => {
 
 
 
+
+
 useEffect(() => {
   if (usersLoading) return;
 
-  [
-    ["cts_quantity", "cts_price", "cts_total"],
-    ["gateways_quantity", "gateways_price", "gateways_total"],
-    ["han_port_quantity", "han_port_price", "han_port_total"],
-    ["temp_humid_quantity", "temp_humid_price", "temp_humid_total"],
-    ["air_quality_quantity", "air_quality_price", "air_quality_total"],
-  ].forEach(([q, p, t]) => updateRowTotal(q, p, t));
+  [...products, ...services].forEach((item) => {
+    updateRowTotal(item.quantity, item.price, item.total);
+  });
 }, [usersLoading]);
+
 
 
 
@@ -443,22 +453,21 @@ useEffect(() => {
       defaultValue={1}
       className="input"
       onChange={() =>
-        handleQuantityPriceLink(item.quantity, item.price, item.total)
+        handleQuantityChange(item.quantity, item.price, item.total)
       }
     />
 
-    <input
-      name={item.price}
-      type="number"
-      defaultValue={item.defaultPrice}
-      className="input"
-      data-base={item.defaultPrice}
-      onChange={(e) => {
-        e.target.dataset.manual = "true";
-        e.target.dataset.base = e.target.value;
-        updateRowTotal(item.quantity, item.price, item.total);
-      }}
-    />
+<input
+  name={item.price}
+  type="number"
+  defaultValue={item.defaultPrice}
+  className="input"
+  data-base={item.defaultPrice}
+  onChange={(e) =>
+    handlePriceChange(e, item.quantity, item.price, item.total)
+  }
+/>
+
 
     <input
       name={item.discount}
@@ -487,109 +496,169 @@ useEffect(() => {
   </section>
 
       {/* Tjänster */}
-      <section className="mb-8">
-        <h2 className="font-medium mb-4">Tjänster</h2>
+    <section className="mb-8">
+  <h2 className="font-medium mb-4">Tjänster</h2>
 
-        <div className="space-y-2">
-          {[
-            { name: "Baspaket", checkboxName: "baspaket_enabled", disabled: true, oneTime: "baspaket_one_time", monthly: "baspaket_monthly", discount: "baspaket_discount" },
-            { name: "Konfiguration", checkboxName: "configuration_enabled", oneTime: "configuration_one_time", monthly: "configuration_monthly", discount: "configuration_discount" },
-            { name: "Frakt", checkboxName: "shipping_enabled", oneTime: "shipping_one_time", monthly: "shipping_monthly", discount: "shipping_discount" },
-            { name: "Energinsikter", checkboxName: "energy_insights_enabled", oneTime: "energy_insights_one_time", monthly: "energy_insights_monthly", discount: "energy_insights_discount" },
-            { name: "Produktionspaket", checkboxName: "production_package_enabled", oneTime: "production_package_one_time", monthly: "production_package_monthly", discount: "production_package_discount" },
-            { name: "API", checkboxName: "api_enabled", oneTime: "api_one_time", monthly: "api_monthly", discount: "api_discount" },
-            { name: "Högupplöst data", checkboxName: "high_res_data_enabled", oneTime: "high_res_data_one_time", monthly: "high_res_data_monthly", discount: "high_res_data_discount" },
-            { name: "Kundanpassning", checkboxName: "custom_solution_enabled", oneTime: "custom_solution_one_time", monthly: "custom_solution_monthly", discount: "custom_solution_discount" },
-          ].map((service) => (
-            <div
-              key={service.name}
-              className="grid grid-cols-4 gap-4 items-center"
-            >
-              <label className="flex items-center gap-2">
-                <input type="checkbox" name={service.checkboxName} disabled={service.disabled} />
-                <span>{service.name}</span>
-              </label>
-              <input name={service.oneTime} placeholder="Engångspris" className="input" />
-              <input name={service.monthly} placeholder="kr/mån" className="input" />
-              <input name={service.discount} placeholder="%" className="input"  onChange={(e) =>
-    applyDiscount(service.monthly, e.target.value)
-  }/>
-            </div>
-          ))}
-        </div>
-      </section>
+  <div className="grid grid-cols-6 gap-4 mb-2 text-sm font-medium">
+    <span>Tjänst</span>
+    <span>Aktiv</span>
+    <span>Antal</span>
+    <span>Pris</span>
+    <span>Rabatt</span>
+    <span>Total</span>
+  </div>
+
+  {services.map((service) => (
+    <div
+      key={service.label}
+      className="grid grid-cols-6 gap-4 items-center mb-2"
+    >
+      <input
+        value={service.label}
+        disabled
+        className="input bg-gray-100"
+      />
+
+      <input
+        type="checkbox"
+        name={service.enabled}
+        disabled={service.disabled}
+        className="h-4 w-4"
+      />
+<input
+  name={service.quantity}
+  type="number"
+  defaultValue={1}
+  className="input"
+  onChange={() =>
+    handleQuantityChange(
+      service.quantity,
+      service.price,
+      service.total
+    )
+  }
+/>
+
+
+      <input
+        name={service.price}
+        type="number"
+        defaultValue={service.defaultPrice}
+        className="input"
+        data-base={service.defaultPrice}
+        onChange={(e) => {
+          e.target.dataset.manual = "true";
+          e.target.dataset.base = e.target.value;
+          updateRowTotal(
+            service.quantity,
+            service.price,
+            service.total
+          );
+        }}
+      />
+
+      <input
+        name={service.discount}
+        placeholder="%"
+        className="input"
+        onChange={(e) => {
+          applyDiscount(service.price, e.target.value);
+          updateRowTotal(
+            service.quantity,
+            service.price,
+            service.total
+          );
+        }}
+      />
+
+      <input
+        name={service.total}
+        className="input bg-gray-100"
+        readOnly
+      />
+    </div>
+  ))}
+</section>
+
 
       {/* Extra */}
+{/* Extra tjänster */}
 <section className="mb-8">
-  <h2 className="font-medium mb-4">Extra</h2>
+  <h2 className="font-medium mb-4">Extra tjänster</h2>
 
-  <div className="grid grid-cols-4 gap-4 text-sm font-medium mb-2">
+  <div className="grid grid-cols-5 gap-4 mb-2 text-sm font-medium">
     <span>Tjänst</span>
     <span>Antal</span>
-    <span>kr/mån</span>
-    <span>Rabatt %</span>
+    <span>Pris</span>
+    <span>Rabatt</span>
+    <span>Total</span>
   </div>
 
-  {/* User accounts */}
-  <div className="grid grid-cols-4 gap-4 mb-2">
-    <input
-      value="Användarkonton"
-      disabled
-      className="input bg-gray-100"
-    />
+  {extraServices.map((service) => (
+    <div
+      key={service.name}
+      className="grid grid-cols-5 gap-4 mb-2 items-center"
+    >
+      <input
+        value={service.name}
+        disabled
+        className="input bg-gray-100"
+      />
 
-    <input
-      name="user_accounts_quantity"
-      placeholder="Antal"
-      className="input"
-    />
+      <input
+        name={service.quantity}
+        type="number"
+        defaultValue={1}
+        className="input"
+        onChange={() =>
+          handleQuantityChange(
+            service.quantity,
+            service.price,
+            service.total
+          )
+        }
+      />
 
-    <input
-      name="user_accounts_monthly"
-      placeholder="kr/mån"
-      className="input"
-    />
+      <input
+        name={service.price}
+        type="number"
+        defaultValue={1}
+        className="input"
+        onChange={(e) => {
+          e.target.dataset.manual = "true";
+          e.target.dataset.base = e.target.value;
 
-    <input
-      name="user_accounts_discount"
-      placeholder="%"
-      className="input"
-      onChange={(e) =>
-        applyDiscount("user_accounts_monthly", e.target.value)
-      }
-    />
-  </div>
+          updateRowTotal(
+            service.quantity,
+            service.price,
+            service.total
+          );
+        }}
+      />
 
-  {/* Custom dashboard */}
-  <div className="grid grid-cols-4 gap-4">
-    <input
-      value="Kundanp. Dashboard"
-      disabled
-      className="input bg-gray-100"
-    />
+      <input
+        name={service.discount}
+        placeholder="%"
+        className="input"
+        onChange={(e) => {
+          applyDiscount(service.price, e.target.value);
+          updateRowTotal(
+            service.quantity,
+            service.price,
+            service.total
+          );
+        }}
+      />
 
-    <input
-      name="custom_dashboard_quantity"
-      placeholder="Antal"
-      className="input"
-    />
-
-    <input
-      name="custom_dashboard_monthly"
-      placeholder="kr/mån"
-      className="input"
-    />
-
-    <input
-      name="custom_dashboard_discount"
-      placeholder="%"
-      className="input"
-      onChange={(e) =>
-        applyDiscount("custom_dashboard_monthly", e.target.value)
-      }
-    />
-  </div>
+      <input
+        name={service.total}
+        className="input bg-gray-100"
+        readOnly
+      />
+    </div>
+  ))}
 </section>
+
 
 
       {/* Actions */}
