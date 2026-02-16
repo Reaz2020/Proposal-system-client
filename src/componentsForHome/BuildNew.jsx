@@ -101,6 +101,7 @@ const extraServices = [
     price: "extra_support_price",
     discount: "extra_support_discount",
     total: "extra_support_total",
+    defaultPrice: 40,
   },
   {
     name: "Extra lagring",
@@ -108,6 +109,7 @@ const extraServices = [
     price: "extra_storage_price",
     discount: "extra_storage_discount",
     total: "extra_storage_total",
+    defaultPrice: 10,
   },
 ];
 
@@ -180,6 +182,9 @@ const extraServices = [
 
   const saveOffer = async () => {
     const payload = collectFormDataForAPI();
+    console.log("Sending JSON to server:");
+    console.log(JSON.stringify(payload, null, 2)); // 👈 pretty print
+
 
     try {
       const res = await fetch(`${API_BASE}/save_offer.php`, {
@@ -218,34 +223,59 @@ const extraServices = [
   };
 
 
-const applyDiscount = (priceName, discountValue) => {
-  const priceInput = document.querySelector(`input[name="${priceName}"]`);
-  if (!priceInput) return;
+// const applyDiscount = (priceName, discountValue) => {
+//   const priceInput = document.querySelector(`input[name="${priceName}"]`);
+//   if (!priceInput) return;
 
-  // Always use the current dataset.base (updated when user changes price)
-  const base = parseFloat(priceInput.dataset.base) || 0;
-  const discount = parseFloat(discountValue);
+//   // Always use the current dataset.base (updated when user changes price)
+//   const base = parseFloat(priceInput.dataset.base) || 0;
+//   const discount = parseFloat(discountValue);
 
-  if (isNaN(discount)) {
-    priceInput.value = base;
-    return;
-  }
+//   if (isNaN(discount)) {
+//     priceInput.value = base;
+//     return;
+//   }
 
-  const discounted = base - (base * discount) / 100;
-  priceInput.value = Math.max(0, discounted.toFixed(2));
-};
+//   const discounted = base - (base * discount) / 100;
+//   priceInput.value = Math.max(0, discounted.toFixed(2));
+// };
 
 
 
 
 // 🔽 NEW FUNCTION: Calculate total for a row based on quantity and price
-const updateRowTotal = (quantityName, priceName, totalName) => {
+// const updateRowTotal = (quantityName, priceName, totalName) => {
+//   const qty = parseFloat(
+//     document.querySelector(`input[name="${quantityName}"]`)?.value
+//   );
+//   const price = parseFloat(
+//     document.querySelector(`input[name="${priceName}"]`)?.value
+//   );
+//   const totalInput = document.querySelector(
+//     `input[name="${totalName}"]`
+//   );
+
+//   if (!totalInput || isNaN(qty) || isNaN(price)) {
+//     if (totalInput) totalInput.value = "";
+//     return;
+//   }
+
+//   totalInput.value = (qty * price).toFixed(2);
+// };
+
+const updateRowTotal = (quantityName, priceName, totalName, discountName) => {
   const qty = parseFloat(
     document.querySelector(`input[name="${quantityName}"]`)?.value
   );
+
   const price = parseFloat(
     document.querySelector(`input[name="${priceName}"]`)?.value
   );
+
+  const discount = parseFloat(
+    document.querySelector(`input[name="${discountName}"]`)?.value
+  ) || 0;
+
   const totalInput = document.querySelector(
     `input[name="${totalName}"]`
   );
@@ -255,16 +285,26 @@ const updateRowTotal = (quantityName, priceName, totalName) => {
     return;
   }
 
-  totalInput.value = (qty * price).toFixed(2);
+  let total = qty * price;
+
+  if (discount > 0) {
+    total = total - (total * discount) / 100;
+  }
+
+  totalInput.value = total.toFixed(2);
 };
+
+
+
+
+
 const handleQuantityChange = (quantityName, priceName, totalName) => {
   updateRowTotal(quantityName, priceName, totalName);
 };
 
-const handlePriceChange = (e, quantityName, priceName, totalName) => {
-  e.target.dataset.manual = "true";
-  e.target.dataset.base = e.target.value;
 
+const handlePriceChange = (e, quantityName, priceName, totalName) => {
+  e.target.dataset.base = e.target.value;
   updateRowTotal(quantityName, priceName, totalName);
 };
 
@@ -452,9 +492,15 @@ useEffect(() => {
       type="number"
       defaultValue={1}
       className="input"
-      onChange={() =>
-        handleQuantityChange(item.quantity, item.price, item.total)
-      }
+    onChange={() =>
+  handleQuantityChange(
+    item.quantity,
+    item.price,
+    item.total,
+    item.discount
+  )
+}
+
     />
 
 <input
@@ -464,7 +510,7 @@ useEffect(() => {
   className="input"
   data-base={item.defaultPrice}
   onChange={(e) =>
-    handlePriceChange(e, item.quantity, item.price, item.total)
+    handlePriceChange(e, item.quantity, item.price, item.total, item.discount)
   }
 />
 
@@ -473,9 +519,9 @@ useEffect(() => {
       name={item.discount}
       placeholder="%"
       className="input"
-      onChange={(e) => {
-        applyDiscount(item.price, e.target.value);
-        updateRowTotal(item.quantity, item.price, item.total);
+      onChange={() => {
+        //  applyDiscount(item.price, e.target.value);
+        updateRowTotal(item.quantity, item.price, item.total, item.discount);
       }}
     />
 
@@ -493,7 +539,7 @@ useEffect(() => {
 
 
 
-  </section>
+      </section>
 
       {/* Tjänster */}
     <section className="mb-8">
@@ -534,39 +580,41 @@ useEffect(() => {
     handleQuantityChange(
       service.quantity,
       service.price,
-      service.total
+      service.total ,
+      service.discount
+    )
+  }
+/>
+
+
+<input
+  name={service.price}
+  type="number"
+  defaultValue={service.defaultPrice}
+  className="input"
+  onChange={(e) =>
+    handlePriceChange(
+      e,
+      service.quantity,
+      service.price,
+      service.total,
+      service.discount
     )
   }
 />
 
 
       <input
-        name={service.price}
-        type="number"
-        defaultValue={service.defaultPrice}
-        className="input"
-        data-base={service.defaultPrice}
-        onChange={(e) => {
-          e.target.dataset.manual = "true";
-          e.target.dataset.base = e.target.value;
-          updateRowTotal(
-            service.quantity,
-            service.price,
-            service.total
-          );
-        }}
-      />
-
-      <input
         name={service.discount}
         placeholder="%"
         className="input"
         onChange={(e) => {
-          applyDiscount(service.price, e.target.value);
+          //applyDiscount(service.price, e.target.value);
           updateRowTotal(
             service.quantity,
             service.price,
-            service.total
+            service.total ,
+            service.discount
           );
         }}
       />
@@ -578,86 +626,79 @@ useEffect(() => {
       />
     </div>
   ))}
-</section>
+    </section>
 
 
-      {/* Extra */}
-{/* Extra tjänster */}
-<section className="mb-8">
-  <h2 className="font-medium mb-4">Extra tjänster</h2>
+{/* Extra */}
+{extraServices.map((service) => (
+  <div
+    key={service.name}
+    className="grid grid-cols-5 gap-4 mb-2 items-center"
+  >
+    <input
+      value={service.name}
+      disabled
+      className="input bg-gray-100"
+    />
 
-  <div className="grid grid-cols-5 gap-4 mb-2 text-sm font-medium">
-    <span>Tjänst</span>
-    <span>Antal</span>
-    <span>Pris</span>
-    <span>Rabatt</span>
-    <span>Total</span>
+    {/* Quantity */}
+    <input
+      name={service.quantity}
+      type="number"
+      defaultValue={1}
+      className="input"
+      onChange={() =>
+        handleQuantityChange(
+          service.quantity,
+          service.price,
+          service.total,
+          service.discount
+        )
+      }
+    />
+
+    {/* Price */}
+    <input
+      name={service.price}
+      type="number"
+      defaultValue={service.defaultPrice}
+      className="input"
+      onChange={(e) =>
+        handlePriceChange(
+          e,
+          service.quantity,
+          service.price,
+          service.total,
+          service.discount
+        )
+      }
+    />
+
+    {/* Discount */}
+    <input
+      name={service.discount}
+      placeholder="%"
+      className="input"
+      onChange={() =>
+        updateRowTotal(
+          service.quantity,
+          service.price,
+          service.total,
+          service.discount
+        )
+      }
+    />
+
+    {/* Total */}
+    <input
+      name={service.total}
+      className="input bg-gray-100"
+      readOnly
+    />
   </div>
+))}
 
-  {extraServices.map((service) => (
-    <div
-      key={service.name}
-      className="grid grid-cols-5 gap-4 mb-2 items-center"
-    >
-      <input
-        value={service.name}
-        disabled
-        className="input bg-gray-100"
-      />
 
-      <input
-        name={service.quantity}
-        type="number"
-        defaultValue={1}
-        className="input"
-        onChange={() =>
-          handleQuantityChange(
-            service.quantity,
-            service.price,
-            service.total
-          )
-        }
-      />
-
-      <input
-        name={service.price}
-        type="number"
-        defaultValue={1}
-        className="input"
-        onChange={(e) => {
-          e.target.dataset.manual = "true";
-          e.target.dataset.base = e.target.value;
-
-          updateRowTotal(
-            service.quantity,
-            service.price,
-            service.total
-          );
-        }}
-      />
-
-      <input
-        name={service.discount}
-        placeholder="%"
-        className="input"
-        onChange={(e) => {
-          applyDiscount(service.price, e.target.value);
-          updateRowTotal(
-            service.quantity,
-            service.price,
-            service.total
-          );
-        }}
-      />
-
-      <input
-        name={service.total}
-        className="input bg-gray-100"
-        readOnly
-      />
-    </div>
-  ))}
-</section>
 
 
 
@@ -728,6 +769,19 @@ useEffect(() => {
           </div>
         </div>
       )}
+
+      <div>    <div className="max-h-80 overflow-y-auto text-sm border rounded-lg">
+              {reviewData?.map((row, i) => (
+                <div
+                  key={i}
+                  className="flex justify-between px-4 py-2 border-b"
+                >
+                  <span className="font-medium">{row.label}</span>
+                  <span>{row.value}</span>
+                </div>
+              ))}
+            </div>
+            </div>
     </div>
   );
 }
